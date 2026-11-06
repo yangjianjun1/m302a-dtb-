@@ -1,5 +1,5 @@
 
-name: Build DTB (CMA 64M)
+name: Build DTs (CMA 64M)
 
 on:
   workflow_dispatch:
