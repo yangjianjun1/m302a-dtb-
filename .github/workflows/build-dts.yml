@@ -1,5 +1,4 @@
-
-name: Build DTs (CMA 64M)
+name: Decompile DTs (No Modify)
 
 on:
   workflow_dispatch:
@@ -10,7 +9,7 @@ on:
       - '.github/workflows/**'
 
 jobs:
-  build:
+  decompile:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,30 +21,17 @@ jobs:
 
       - name: Decompile original DTB → DTS
         run: |
-          mkdir -p build
-          dtc -I dtb -O dts -o build/board.dts \
+          mkdir -p out
+          dtc -I dtb -O dts -o out/meson-gxl-s905l3b-m302a.dts \
             dtb/original/meson-gxl-s905l3b-m302a.dtb
 
-      - name: Patch CMA to 64M
+      - name: Show CMA node (read-only)
         run: |
-          sed -i '/linux,cma/,/size/{s/0x10000000/0x04000000/}' build/board.dts
-          grep -A4 'linux,cma' build/board.dts
+          echo "=== CMA node in decompiled DTS ==="
+          grep -A4 'linux,cma' out/meson-gxl-s905l3b-m302a.dts || echo "linux,cma node not found"
 
-      - name: Compile DTS → DTB
-        run: |
-          mkdir -p out
-          dtc -I dts -O dtb -o out/meson-gxl-s905l3b-m302a.dtb build/board.dts
-
-      - name: Verify - Decompile final DTB back to DTS
-        run: |
-          dtc -I dtb -O dts -o out/board-verified.dts out/meson-gxl-s905l3b-m302a.dtb
-          echo "=== CMA node in final DTB ==="
-          grep -A4 'linux,cma' out/board-verified.dts
-
-      - name: Upload artifacts
+      - name: Upload decompiled DTS
         uses: actions/upload-artifact@v4
         with:
-          name: dtb-cma64m
-          path: |
-            out/meson-gxl-s905l3b-m302a.dtb
-            out/board-verified.dts
+          name: dtb-decompiled
+          path: out/meson-gxl-s905l3b-m302a.dts
